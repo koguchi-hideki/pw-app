@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="パスワード補助">
+<title>パスワード補助</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --text: #111111;
+    --muted: #555555;
+    --border: #cccccc;
+    --accent: #1a56db;
+    --accent-dark: #1240a8;
+    --green: #15803d;
+    --green-dark: #166534;
+    --red: #b91c1c;
+    --red-dark: #991b1b;
+    --row-bg: #f5f7ff;
+    --row-border: #d0d9f5;
+  }
+
+  body {
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    font-size: 24px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  }
+  header h1 { font-size: 28px; font-weight: 700; letter-spacing: .03em; }
+  #settingsBtn {
+    background: none;
+    border: 2px solid rgba(255,255,255,.7);
+    border-radius: 50%;
+    width: 52px; height: 52px;
+    font-size: 26px;
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  #settingsBtn:active { background: rgba(255,255,255,.2); }
+
+  /* ===== MAIN SCROLL ===== */
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 14px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ===== PREFIX BOX ===== */
+  .prefix-box {
+    background: #fffbea;
+    border: 3px solid #f5c400;
+    border-radius: 16px;
+    padding: 18px 16px 14px;
+  }
+  .prefix-box label {
+    display: block;
+    font-size: 22px;
+    color: #7a5f00;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .prefix-box .hint {
+    font-size: 18px;
+    color: #8a7030;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  #prefixInput {
+    width: 100%;
+    font-size: 40px;
+    font-weight: 700;
+    padding: 12px 16px;
+    border: 3px solid #c9a900;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text);
+    letter-spacing: .2em;
+    text-align: center;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  #prefixInput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,86,219,.25); }
+
+  /* ===== EMAIL BUTTON ===== */
+  #emailCopyBtn {
+    width: 100%;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 18px;
+    padding: 22px 16px;
+    font-size: 30px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1.3;
+    box-shadow: 0 4px 12px rgba(21,128,61,.35);
+    transition: background .15s, transform .1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+  }
+  #emailCopyBtn:active { background: var(--green-dark); transform: scale(.98); }
+  #emailCopyBtn .email-display {
+    display: block;
+    font-size: 20px;
+    font-weight: 400;
+    opacity: .85;
+    margin-top: 4px;
+    word-break: break-all;
+  }
+
+  /* ===== SECTION TITLE ===== */
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--muted);
+    border-left: 5px solid var(--accent);
+    padding-left: 12px;
+    margin-bottom: -8px;
+  }
+
+  /* ===== SERVICE LIST ===== */
+  #serviceList {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .service-row {
+    background: var(--row-bg);
+    border: 2px solid var(--row-border);
+    border-radius: 16px;
+    padding: 16px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .service-name {
+    font-size: 26px;
+    font-weight: 700;
+    flex: 1;
+    word-break: break-all;
+  }
+  .copy-btn {
+    flex-shrink: 0;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 3px 8px rgba(26,86,219,.3);
+    transition: background .15s, transform .1s;
+  }
+  .copy-btn:active { background: var(--accent-dark); transform: scale(.97); }
+
+  .empty-msg {
+    text-align: center;
+    color: var(--muted);
+    font-size: 22px;
+    padding: 30px 0;
+    line-height: 1.6;
+  }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(.9);
+    background: rgba(21,128,61,.95);
+    color: #fff;
+    font-size: 32px;
+    font-weight: 700;
+    padding: 24px 36px;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    white-space: nowrap;
+    text-align: center;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  /* ===== SETTINGS PANEL ===== */
+  #settingsPanel {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 500;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  #settingsPanel.open { display: flex; }
+
+  .settings-header {
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  }
+  #closeSettingsBtn {
+    background: none;
+    border: 2px solid rgba(255,255,255,.7);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 26px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  #closeSettingsBtn:active { background: rgba(255,255,255,.2); }
+  .settings-header h2 { font-size: 26px; font-weight: 700; }
+
+  .settings-body {
+    padding: 24px 14px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .settings-section {
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .settings-section-title {
+    background: #eef2ff;
+    font-size: 22px;
+    font-weight: 700;
+    padding: 14px 16px;
+    color: var(--accent);
+    border-bottom: 2px solid var(--row-border);
+  }
+  .settings-section-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  .field-label {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .big-input {
+    width: 100%;
+    font-size: 28px;
+    padding: 12px 14px;
+    border: 3px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text);
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .big-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,86,219,.2); }
+
+  .pw-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .pw-input-wrap .big-input { padding-right: 64px; }
+  .eye-btn {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 8px;
+    color: var(--muted);
+    line-height: 1;
+  }
+
+  .save-btn {
+    width: 100%;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 28px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(21,128,61,.3);
+    transition: background .15s;
+  }
+  .save-btn:active { background: var(--green-dark); }
+
+  .divider {
+    border: none;
+    border-top: 2px dashed var(--border);
+    margin: 4px 0;
+  }
+
+  /* Service add form */
+  .add-service-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Registered service list in settings */
+  #settingsServiceList { display: flex; flex-direction: column; gap: 10px; }
+  .settings-service-row {
+    background: var(--row-bg);
+    border: 2px solid var(--row-border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .settings-service-info { flex: 1; min-width: 0; }
+  .settings-service-name { font-size: 24px; font-weight: 700; }
+  .settings-service-pw {
+    font-size: 20px;
+    color: var(--muted);
+    font-family: monospace;
+    word-break: break-all;
+  }
+  .del-btn {
+    flex-shrink: 0;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .del-btn:active { background: var(--red-dark); }
+
+  /* show/hide pw in settings list */
+  .pw-mask { letter-spacing: .12em; }
+
+  /* pw toggle in settings list */
+  .pw-row-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .eye-inline {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 2px 4px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <h1>🔑 パスワード補助</h1>
+  <button id="settingsBtn" aria-label="設定">⚙️</button>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main>
+  <!-- PREFIX INPUT -->
+  <div class="prefix-box">
+    <label for="prefixInput">🔒 共通の4文字（頭の中にある数字・文字）</label>
+    <p class="hint">ここに入力した文字は保存されません。アプリを閉じると消えます。</p>
+    <input
+      type="text"
+      id="prefixInput"
+      inputmode="numeric"
+      maxlength="10"
+      placeholder="例：1234"
+      autocomplete="off"
+      spellcheck="false"
+    >
+  </div>
+
+  <!-- EMAIL BUTTON -->
+  <button id="emailCopyBtn">
+    <span>
+      📧 自分のメールアドレスを<br>コピーする
+      <span class="email-display" id="emailDisplay"></span>
+    </span>
+  </button>
+
+  <!-- SERVICE LIST -->
+  <div class="section-title">📋 登録済みサービス</div>
+  <div id="serviceList"></div>
+</main>
+
+<!-- ===== TOAST ===== -->
+<div id="toast">コピーしました！✓</div>
+
+<!-- ===== SETTINGS PANEL ===== -->
+<div id="settingsPanel" role="dialog" aria-modal="true" aria-label="設定">
+  <div class="settings-header">
+    <button id="closeSettingsBtn">← 戻る</button>
+    <h2>⚙️ 設定</h2>
+  </div>
+  <div class="settings-body">
+
+    <!-- Email section -->
+    <div class="settings-section">
+      <div class="settings-section-title">📧 自分のメールアドレス</div>
+      <div class="settings-section-body">
+        <label class="field-label" for="emailInput">メールアドレスを入力してください</label>
+        <input
+          type="email"
+          id="emailInput"
+          class="big-input"
+          placeholder="example@email.com"
+          inputmode="email"
+          autocomplete="email"
+          spellcheck="false"
+        >
+        <button class="save-btn" id="saveEmailBtn">💾 保存する</button>
+      </div>
+    </div>
+
+    <!-- Add service section -->
+    <div class="settings-section">
+      <div class="settings-section-title">➕ サービスを新しく登録する</div>
+      <div class="settings-section-body">
+        <div class="add-service-form">
+          <div>
+            <label class="field-label" for="newServiceName">サービス名</label>
+            <input
+              type="text"
+              id="newServiceName"
+              class="big-input"
+              placeholder="例：楽天、Amazon"
+              autocomplete="off"
+              spellcheck="false"
+            >
+          </div>
+          <div>
+            <label class="field-label" for="newServicePw">パスワードの後半部分</label>
+            <div class="pw-input-wrap">
+              <input
+                type="password"
+                id="newServicePw"
+                class="big-input"
+                placeholder="後半部分を入力"
+                autocomplete="new-password"
+                spellcheck="false"
+              >
+              <button class="eye-btn" id="toggleNewPw" type="button" aria-label="表示切り替え">👁️</button>
+            </div>
+          </div>
+          <button class="save-btn" id="addServiceBtn" style="background:var(--accent);box-shadow:0 3px 10px rgba(26,86,219,.3)">
+            ➕ 登録する
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registered services in settings -->
+    <div class="settings-section">
+      <div class="settings-section-title">📋 登録済みサービス一覧</div>
+      <div class="settings-section-body">
+        <div id="settingsServiceList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+// prefix: session only (never persisted)
+let prefix = '';
+
+function getEmail() { return localStorage.getItem('pw_email') || ''; }
+function saveEmail(v) { localStorage.setItem('pw_email', v); }
+
+function getServices() {
+  try { return JSON.parse(localStorage.getItem('pw_services') || '[]'); }
+  catch { return []; }
+}
+function saveServices(arr) { localStorage.setItem('pw_services', JSON.stringify(arr)); }
+
+// ===== TOAST =====
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg || 'コピーしました！✓';
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ===== CLIPBOARD =====
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ===== PREFIX =====
+const prefixInput = document.getElementById('prefixInput');
+prefixInput.addEventListener('input', () => {
+  prefix = prefixInput.value;
+});
+
+// ===== EMAIL DISPLAY =====
+function updateEmailDisplay() {
+  const email = getEmail();
+  const display = document.getElementById('emailDisplay');
+  if (email) {
+    display.textContent = email;
+    document.getElementById('emailCopyBtn').style.opacity = '1';
+  } else {
+    display.textContent = '（設定画面でメールアドレスを登録してください）';
+    document.getElementById('emailCopyBtn').style.opacity = '.65';
+  }
+}
+
+document.getElementById('emailCopyBtn').addEventListener('click', async () => {
+  const email = getEmail();
+  if (!email) {
+    showToast('⚠️ メールアドレスが未登録です');
+    return;
+  }
+  const ok = await copyText(email);
+  if (ok) showToast('📧 メールアドレスを\nコピーしました！');
+  else showToast('コピーに失敗しました');
+});
+
+// ===== SERVICE LIST (MAIN) =====
+function renderServiceList() {
+  const list = document.getElementById('serviceList');
+  const services = getServices();
+
+  if (services.length === 0) {
+    list.innerHTML = '<p class="empty-msg">まだサービスが登録されていません。<br>右上の ⚙️ から登録してください。</p>';
+    return;
+  }
+
+  list.innerHTML = '';
+  services.forEach((svc, i) => {
+    const row = document.createElement('div');
+    row.className = 'service-row';
+
+    const name = document.createElement('div');
+    name.className = 'service-name';
+    name.textContent = svc.name;
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = '合体コピー';
+    btn.setAttribute('aria-label', svc.name + 'のパスワードをコピー');
+    btn.addEventListener('click', async () => {
+      const combined = prefix + svc.suffix;
+      if (!prefix) {
+        showToast('⚠️ 上の入力欄に\n共通の4文字を入力してください');
+        prefixInput.focus();
+        return;
+      }
+      const ok = await copyText(combined);
+      if (ok) showToast('🔑 コピーしました！');
+      else showToast('コピーに失敗しました');
+    });
+
+    row.appendChild(name);
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
+}
+
+// ===== SETTINGS PANEL =====
+const settingsPanel = document.getElementById('settingsPanel');
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  openSettings();
+});
+document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+  closeSettings();
+});
+
+function openSettings() {
+  settingsPanel.classList.add('open');
+  settingsPanel.scrollTop = 0;
+  // pre-fill email
+  document.getElementById('emailInput').value = getEmail();
+  renderSettingsServiceList();
+}
+function closeSettings() {
+  settingsPanel.classList.remove('open');
+  renderServiceList();
+  updateEmailDisplay();
+}
+
+// Save email
+document.getElementById('saveEmailBtn').addEventListener('click', () => {
+  const val = document.getElementById('emailInput').value.trim();
+  if (!val) {
+    showToast('⚠️ メールアドレスを入力してください');
+    return;
+  }
+  saveEmail(val);
+  showToast('💾 メールアドレスを保存しました');
+});
+
+// Toggle new pw visibility
+let newPwVisible = false;
+document.getElementById('toggleNewPw').addEventListener('click', () => {
+  const inp = document.getElementById('newServicePw');
+  newPwVisible = !newPwVisible;
+  inp.type = newPwVisible ? 'text' : 'password';
+  document.getElementById('toggleNewPw').textContent = newPwVisible ? '🙈' : '👁️';
+});
+
+// Add service
+document.getElementById('addServiceBtn').addEventListener('click', () => {
+  const name = document.getElementById('newServiceName').value.trim();
+  const suffix = document.getElementById('newServicePw').value;
+  if (!name) { showToast('⚠️ サービス名を入力してください'); return; }
+  if (!suffix) { showToast('⚠️ パスワード後半を入力してください'); return; }
+
+  const services = getServices();
+  services.push({ name, suffix });
+  saveServices(services);
+
+  document.getElementById('newServiceName').value = '';
+  document.getElementById('newServicePw').value = '';
+  newPwVisible = false;
+  document.getElementById('newServicePw').type = 'password';
+  document.getElementById('toggleNewPw').textContent = '👁️';
+
+  showToast('✅ ' + name + ' を登録しました');
+  renderSettingsServiceList();
+});
+
+// ===== SETTINGS SERVICE LIST =====
+function maskPw(str) {
+  return '●'.repeat(str.length);
+}
+
+function renderSettingsServiceList() {
+  const list = document.getElementById('settingsServiceList');
+  const services = getServices();
+
+  if (services.length === 0) {
+    list.innerHTML = '<p style="font-size:22px;color:var(--muted);text-align:center;padding:16px 0;">まだ登録されていません</p>';
+    return;
+  }
+
+  list.innerHTML = '';
+  services.forEach((svc, i) => {
+    const row = document.createElement('div');
+    row.className = 'settings-service-row';
+
+    const info = document.createElement('div');
+    info.className = 'settings-service-info';
+
+    const svcName = document.createElement('div');
+    svcName.className = 'settings-service-name';
+    svcName.textContent = svc.name;
+
+    const pwWrap = document.createElement('div');
+    pwWrap.className = 'pw-row-wrap';
+
+    const pwSpan = document.createElement('span');
+    pwSpan.className = 'settings-service-pw pw-mask';
+    pwSpan.textContent = maskPw(svc.suffix);
+    let pwShown = false;
+
+    const eyeBtn = document.createElement('button');
+    eyeBtn.className = 'eye-inline';
+    eyeBtn.textContent = '👁️';
+    eyeBtn.setAttribute('aria-label', '表示切り替え');
+    eyeBtn.addEventListener('click', () => {
+      pwShown = !pwShown;
+      pwSpan.textContent = pwShown ? svc.suffix : maskPw(svc.suffix);
+      eyeBtn.textContent = pwShown ? '🙈' : '👁️';
+    });
+
+    pwWrap.appendChild(pwSpan);
+    pwWrap.appendChild(eyeBtn);
+
+    info.appendChild(svcName);
+    info.appendChild(pwWrap);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.textContent = '削除';
+    delBtn.setAttribute('aria-label', svc.name + 'を削除');
+    delBtn.addEventListener('click', () => {
+      if (!confirm(svc.name + ' を削除しますか？')) return;
+      const updated = getServices();
+      updated.splice(i, 1);
+      saveServices(updated);
+      showToast('🗑️ ' + svc.name + ' を削除しました');
+      renderSettingsServiceList();
+    });
+
+    row.appendChild(info);
+    row.appendChild(delBtn);
+    list.appendChild(row);
+  });
+}
+
+// ===== TOAST multiline fix =====
+document.getElementById('toast').style.whiteSpace = 'pre-line';
+
+// ===== SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// ===== INIT =====
+updateEmailDisplay();
+renderServiceList();
+</script>
+</body>
+</html>
