@@ -63,6 +63,19 @@
     transition: background .15s;
   }
   #settingsBtn:active { background: rgba(255,255,255,.2); }
+  .header-btns { display: flex; gap: 10px; align-items: center; }
+  #closeAppBtn {
+    background: none;
+    border: 2px solid rgba(255,255,255,.7);
+    border-radius: 50%;
+    width: 52px; height: 52px;
+    font-size: 26px;
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  #closeAppBtn:active { background: rgba(255,255,255,.2); }
 
   /* ===== MAIN SCROLL ===== */
   main {
@@ -403,7 +416,10 @@
 <!-- ===== HEADER ===== -->
 <header>
   <h1>🔑 パスワード補助</h1>
-  <button id="settingsBtn" aria-label="設定">⚙️</button>
+  <div class="header-btns">
+    <button id="settingsBtn" aria-label="設定">⚙️</button>
+    <button id="closeAppBtn" aria-label="閉じる">✕</button>
+  </div>
 </header>
 
 <!-- ===== MAIN ===== -->
@@ -765,7 +781,20 @@ function renderSettingsServiceList() {
 // ===== TOAST multiline fix =====
 document.getElementById('toast').style.whiteSpace = 'pre-line';
 
-// ===== SERVICE WORKER =====
+// ===== CLOSE APP =====
+document.getElementById('closeAppBtn').addEventListener('click', () => {
+  // 前半4文字をクリア
+  prefixInput.value = '';
+  prefix = '';
+  // アプリを閉じる
+  window.close();
+  // window.close()が効かない場合（PWA等）は画面を空白にして使用不可状態に
+  setTimeout(() => {
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100dvh;font-size:28px;color:#555;text-align:center;padding:20px;">アプリを閉じました。<br>ホーム画面に戻ってください。</div>';
+  }, 100);
+});
+
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
