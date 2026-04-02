@@ -418,7 +418,7 @@
   <h1>🔑 パスワード補助</h1>
   <div class="header-btns">
     <button id="settingsBtn" aria-label="設定">⚙️</button>
-    <button id="closeAppBtn" aria-label="閉じる">✕</button>
+    <button id="closeAppBtn" aria-label="4文字をクリア">🗑️</button>
   </div>
 </header>
 
@@ -437,6 +437,7 @@
       autocomplete="off"
       spellcheck="false"
     >
+    <p class="hint" id="timerMsg" style="display:none;color:#b91c1c;font-weight:700;margin-top:8px;"></p>
   </div>
 
   <!-- EMAIL BUTTON -->
@@ -577,9 +578,6 @@ async function copyText(text) {
 
 // ===== PREFIX =====
 const prefixInput = document.getElementById('prefixInput');
-prefixInput.addEventListener('input', () => {
-  prefix = prefixInput.value;
-});
 
 // ===== EMAIL DISPLAY =====
 function updateEmailDisplay() {
@@ -781,17 +779,61 @@ function renderSettingsServiceList() {
 // ===== TOAST multiline fix =====
 document.getElementById('toast').style.whiteSpace = 'pre-line';
 
-// ===== CLOSE APP =====
+// ===== AUTO CLEAR TIMER =====
+const CLEAR_SECONDS = 60; // 1分
+let clearTimer = null;
+let countdownInterval = null;
+const timerMsg = document.getElementById('timerMsg');
+
+function startClearTimer() {
+  // 既存タイマーをリセット
+  clearTimeout(clearTimer);
+  clearInterval(countdownInterval);
+
+  let remaining = CLEAR_SECONDS;
+  timerMsg.style.display = 'block';
+  timerMsg.textContent = '⏱ ' + remaining + '秒後に自動で消えます';
+
+  countdownInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(countdownInterval);
+    } else {
+      timerMsg.textContent = '⏱ ' + remaining + '秒後に自動で消えます';
+    }
+  }, 1000);
+
+  clearTimer = setTimeout(() => {
+    clearInterval(countdownInterval);
+    prefixInput.value = '';
+    prefix = '';
+    timerMsg.style.display = 'none';
+    showToast('🔒 4文字を自動で消しました');
+  }, CLEAR_SECONDS * 1000);
+}
+
+function stopClearTimer() {
+  clearTimeout(clearTimer);
+  clearInterval(countdownInterval);
+  timerMsg.style.display = 'none';
+}
+
+// ===== PREFIX INPUT（タイマー連動）=====
+prefixInput.addEventListener('input', () => {
+  prefix = prefixInput.value;
+  if (prefix.length > 0) {
+    startClearTimer();
+  } else {
+    stopClearTimer();
+  }
+});
+
+// ===== CLEAR BUTTON =====
 document.getElementById('closeAppBtn').addEventListener('click', () => {
-  // 前半4文字をクリア
   prefixInput.value = '';
   prefix = '';
-  // アプリを閉じる
-  window.close();
-  // window.close()が効かない場合（PWA等）は画面を空白にして使用不可状態に
-  setTimeout(() => {
-    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100dvh;font-size:28px;color:#555;text-align:center;padding:20px;">アプリを閉じました。<br>ホーム画面に戻ってください。</div>';
-  }, 100);
+  stopClearTimer();
+  showToast('🗑️ 4文字を消しました');
 });
 
 
